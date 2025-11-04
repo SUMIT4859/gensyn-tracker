@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Register • Gensyn Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand">
+        <div class="logo">🧭</div>
+        <h1>Gensyn Tracker</h1>
+      </div>
+
+      <h2>Create an account</h2>
+
+      <form id="registerForm" class="auth-form" autocomplete="off">
+        <div class="row">
+          <input id="username" name="username" placeholder="Username" required />
+        </div>
+        <div class="row">
+          <input id="email" name="email" type="email" placeholder="Email address" required />
+        </div>
+        <div class="row">
+          <input id="password" name="password" type="password" placeholder="Password (8+ chars)" minlength="8" required />
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Create account</button>
+          <a class="btn ghost" href="login.html">Have an account? Log in</a>
+        </div>
+
+        <p class="muted">By registering you agree to help build the Gensyn community.</p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:4000';
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      };
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        alert('Registered successfully — please login');
+        window.location.href = 'login.html';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

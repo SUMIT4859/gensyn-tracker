@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login • Gensyn Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand">
+        <div class="logo">🧭</div>
+        <h1>Gensyn Tracker</h1>
+      </div>
+
+      <h2>Welcome back</h2>
+
+      <form id="loginForm" class="auth-form" autocomplete="off">
+        <div class="row">
+          <input id="email" name="email" type="email" placeholder="Email address" required />
+        </div>
+        <div class="row">
+          <input id="password" name="password" type="password" placeholder="Password" required />
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Sign in</button>
+          <a class="btn ghost" href="register.html">Create account</a>
+        </div>
+        <p class="muted">Use the account you created to access your contributions.</p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:4000';
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email.value.trim(),
+            password: password.value
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username || '');
+        // redirect to main dashboard
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

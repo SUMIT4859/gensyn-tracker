@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard • Gensyn Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-left">
+      <div class="brand-inline"><span class="logo">🧭</span><span class="brand-name">Gensyn Tracker</span></div>
+      <div class="nav-badge">Navigator Tool</div>
+    </div>
+
+    <div class="nav-right">
+      <div id="welcome" class="welcome">Hi — <strong id="navUser">User</strong></div>
+      <button id="logoutBtn" class="btn logout">Logout</button>
+    </div>
+  </nav>
+
+  <main class="main-grid">
+    <section class="card form-card premium">
+      <div class="card-header">
+        <h2>Add / Edit Contribution</h2>
+        <small class="muted">Track your work for Gensyn Pioneer Program</small>
+      </div>
+
+      <form id="contribForm" class="contrib-form">
+        <input type="hidden" id="contribId" />
+        <input id="title" placeholder="Title" required />
+        <select id="category" required>
+          <option value="">Select category</option>
+          <option>Guide</option>
+          <option>Tool</option>
+          <option>Infographic</option>
+          <option>Support</option>
+          <option>Bug Report</option>
+        </select>
+        <input id="link" placeholder="Link (GitHub / Notion / X)" />
+        <textarea id="description" placeholder="Short description"></textarea>
+        <label for="screenshot">Upload Screenshot (optional):</label>
+        <input type="file" id="screenshot" name="screenshot" accept="image/*">
+
+        <input id="date" type="date" required />
+
+        <div class="actions">
+          <button id="saveBtn" class="btn primary">Save</button>
+          <button id="resetBtn" type="button" class="btn ghost">Reset</button>
+          <button id="exportBtn" type="button" class="btn success">Export CSV</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card list-card premium">
+      <div class="card-header">
+        <h2>All Contributions</h2>
+        <small class="muted">Only your entries are visible here</small>
+      </div>
+
+      <table id="contribTable" class="table">
+        <thead>
+          <tr><th>Title</th><th>Category</th><th>Link</th><th>Image</th><th>Actions</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
