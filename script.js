@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:4000';
+const API_BASE = 'https://gensyn-tracker.onrender.com';
 const API = `${API_BASE}/api/contributions`;
 
 function getToken() { return localStorage.getItem('token') || null; }
