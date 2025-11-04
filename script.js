@@ -118,30 +118,72 @@ function resetForm(){
   const btn = document.getElementById('saveBtn'); if(btn) btn.textContent='Save';
 }
 
-async function loadEdit(id){
+// --- loadEdit: load a single contribution into the form for updating
+async function loadEdit(id) {
   try {
-    const res = await fetch(`${API}/${id}`, { headers: getAuthHeadersJSON() });
-    if(!res.ok) throw new Error('Failed to load');
+    if (!id) return alert('Invalid id');
+    // show a small visual while loading (optional)
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Loading...'; }
+
+    const res = await fetch(`${API}/${encodeURIComponent(id)}`, { headers: getAuthHeadersJSON() });
+    if (res.status === 401) {
+      // token problem
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = '/login.html';
+      return;
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(()=>null);
+      throw new Error(text || `Failed to load (${res.status})`);
+    }
     const data = await res.json();
+
     document.getElementById('contribId').value = data._id || '';
     document.getElementById('title').value = data.title || '';
     document.getElementById('category').value = data.category || '';
     document.getElementById('link').value = data.link || '';
     document.getElementById('description').value = data.description || '';
     document.getElementById('date').value = data.date ? new Date(data.date).toISOString().slice(0,10) : '';
-    const btn = document.getElementById('saveBtn'); if(btn) btn.textContent='Update';
+    if (saveBtn) saveBtn.textContent = 'Update'; // user sees Update
+    if (saveBtn) saveBtn.disabled = false;
   } catch (err) {
-    console.error(err); alert('Could not load contribution');
+    console.error('loadEdit error:', err);
+    alert('Could not load contribution: ' + (err.message || 'Unknown'));
+    const saveBtn = document.getElementById('saveBtn'); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
   }
 }
 
-async function del(id){
-  if(!confirm('Delete this contribution?')) return;
+// --- del: delete a contribution with confirmation
+async function del(id) {
+  if (!id) return alert('Invalid id');
+  if (!confirm('Delete this contribution?')) return;
   try {
-    const res = await fetch(`${API}/${id}`, { method:'DELETE', headers: getAuthHeadersJSON() });
-    if(!res.ok) throw new Error('Failed to delete');
+    const res = await fetch(`${API}/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getAuthHeadersJSON()
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = '/login.html';
+      return;
+    }
+
+    if (!res.ok) {
+      // try to read JSON body for error message
+      let body;
+      try { body = await res.json(); } catch(e){ body = await res.text().catch(()=>null); }
+      const msg = (body && (body.error || body.message)) || `Delete failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    // success -> reload list
     fetchList();
   } catch (err) {
-    console.error(err); alert('Delete failed');
+    console.error('delete error:', err);
+    alert('Delete failed: ' + (err.message || 'Unknown'));
   }
 }
