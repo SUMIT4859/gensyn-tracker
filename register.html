@@ -38,28 +38,34 @@
   </main>
 
   <script>
-    const API_BASE = 'http://localhost:4000';
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        username: document.getElementById('username').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value
-      };
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Registration failed');
-        alert('Registered successfully — please login');
-        window.location.href = 'login.html';
-      } catch (err) {
-        alert(err.message);
-      }
-    });
-  </script>
+  const API_BASE = 'https://gensyn-tracker.onrender.com';
+
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      username: document.getElementById('username').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    };
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      // Option: auto-login by saving token if backend returns token on register.
+      // For now, inform user and redirect to login.
+      alert('Registered successfully — please login');
+      window.location.href = 'login.html';
+    } catch (err) {
+      alert(err.message);
+      console.error('Register error', err);
+    }
+  });
+</script>
+
 </body>
 </html>
