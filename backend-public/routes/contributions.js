@@ -1,3 +1,4 @@
+// backend-public/routes/contributions.js
 const express = require("express");
 const router = express.Router();
 const Contribution = require("../models/Contribution");
@@ -19,7 +20,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// CREATE  
+// CREATE
 router.post("/", auth, upload.single("screenshot"), async (req, res) => {
   try {
     const contributionData = { ...req.body, userId: req.userId };
@@ -28,10 +29,10 @@ router.post("/", auth, upload.single("screenshot"), async (req, res) => {
     }
     const contribution = new Contribution(contributionData);
     await contribution.save();
-    return res.status(201).json(contribution);
+    res.status(201).json(contribution);
   } catch (err) {
-    console.error("❌ Save Error:", err);
-    return res.status(400).json({ error: err.message || "Failed to save contribution" });
+    console.error("Save Error:", err);
+    res.status(400).json({ error: err.message || "Failed to save contribution" });
   }
 });
 
@@ -39,9 +40,9 @@ router.post("/", auth, upload.single("screenshot"), async (req, res) => {
 router.get("/", auth, async (req, res) => {
   try {
     const list = await Contribution.find({ userId: req.userId }).sort({ date: -1 });
-    return res.json(list);
+    res.json(list);
   } catch (err) {
-    return res.status(500).json({ error: "Failed to fetch contributions" });
+    res.status(500).json({ error: "Failed to fetch contributions" });
   }
 });
 
@@ -49,12 +50,10 @@ router.get("/", auth, async (req, res) => {
 router.get("/:id", auth, async (req, res) => {
   try {
     const contribution = await Contribution.findOne({ _id: req.params.id, userId: req.userId });
-    if (!contribution) {
-      return res.status(404).json({ error: "Contribution not found" });
-    }
-    return res.json(contribution);
+    if (!contribution) return res.status(404).json({ error: "Contribution not found" });
+    res.json(contribution);
   } catch (err) {
-    return res.status(400).json({ error: "Invalid request" });
+    res.status(400).json({ error: "Invalid request" });
   }
 });
 
@@ -68,12 +67,10 @@ router.put("/:id", auth, upload.single("screenshot"), async (req, res) => {
       updateData,
       { new: true }
     );
-    if (!updated) {
-      return res.status(404).json({ error: "Contribution not found" });
-    }
-    return res.json(updated);
+    if (!updated) return res.status(404).json({ error: "Contribution not found" });
+    res.json(updated);
   } catch (err) {
-    return res.status(400).json({ error: "Failed to update contribution" });
+    res.status(400).json({ error: "Failed to update contribution" });
   }
 });
 
@@ -81,12 +78,10 @@ router.put("/:id", auth, upload.single("screenshot"), async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   try {
     const deleted = await Contribution.findOneAndDelete({ _id: req.params.id, userId: req.userId });
-    if (!deleted) {
-      return res.status(404).json({ error: "Contribution not found" });
-    }
-    return res.json({ message: "Deleted successfully" });
+    if (!deleted) return res.status(404).json({ error: "Contribution not found" });
+    res.json({ message: "Deleted successfully" });
   } catch (err) {
-    return res.status(400).json({ error: "Failed to delete contribution" });
+    res.status(400).json({ error: "Failed to delete contribution" });
   }
 });
 
@@ -94,9 +89,7 @@ router.delete("/:id", auth, async (req, res) => {
 router.get("/export/csv", auth, async (req, res) => {
   try {
     const contributions = await Contribution.find({ userId: req.userId }).lean();
-    if (!contributions.length) {
-      return res.status(404).json({ message: "No data available for export" });
-    }
+    if (!contributions.length) return res.status(404).json({ message: "No data available for export" });
 
     const fields = ["title", "category", "link", "description", "date", "screenshot"];
     const parser = new Parser({ fields });
@@ -104,9 +97,10 @@ router.get("/export/csv", auth, async (req, res) => {
 
     res.header("Content-Type", "text/csv");
     res.attachment("contributions.csv");
-    return res.send(csv);
+    res.send(csv);
   } catch (err) {
-    return res.status(500).json({ error: "Error exporting CSV" });
+    console.error("CSV Error:", err);
+    res.status(500).json({ error: "Error exporting CSV" });
   }
 });
 

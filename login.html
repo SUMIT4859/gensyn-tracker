@@ -33,37 +33,6 @@
     </div>
   </main>
 
-<script>
-  // use relative path so it works in both local and deployed environments
-  const API_BASE = 'https://gensyn-tracker.onrender.com';
-
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: document.getElementById('email').value.trim(),
-          password: document.getElementById('password').value
-        })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Login failed');
-
-      localStorage.setItem('token', data.token);
-      // store username (if returned) or derive from email
-      const username = data.username || (document.getElementById('email').value.split('@')[0]);
-      localStorage.setItem('username', username);
-
-      window.location.href = 'index.html';
-    } catch (err) {
-      alert(err.message);
-      console.error('Login error', err);
-    }
-  });
-</script>
-
+  <script src="/auth.js"></script>
 </body>
 </html>

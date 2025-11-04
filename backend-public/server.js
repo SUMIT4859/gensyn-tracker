@@ -9,43 +9,40 @@ const helmet = require("helmet");
 
 const app = express();
 
-// --- uploads folder ---
+// uploads dir
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-// --- CORS: allow env-configured origins (local + deployed) ---
-const FRONTENDS = (process.env.ALLOWED_ORIGINS || "http://127.0.0.1:5500,http://localhost:5500")
-  .split(",")
-  .map(u => u.trim());
-app.use(cors({ origin: FRONTENDS, credentials: true }));
+// Frontend root (one level up)
+const frontendRoot = path.join(__dirname, "..");
 
-// Security headers: keep helmet but disable CSP temporarily so inline scripts work
-app.use(helmet({
-  contentSecurityPolicy: false
+// CORS - allow same-origin requests; allow deployed origins via env var
+const FRONTENDS = (process.env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: FRONTENDS.length ? FRONTENDS : [ "https://gensyn-tracker.onrender.com" ],
+  credentials: true
 }));
 
-// parse JSON and urlencoded bodies
+// Security - basic
+app.use(helmet());
+
+// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// serve uploaded images
+// Serve uploads and frontend static
 app.use("/uploads", express.static(uploadDir));
-
-// --- Serve frontend static files (project root) ---
-// server.js is in backend-public; frontend files are in parent folder
-const frontendRoot = path.join(__dirname, "..");
 app.use(express.static(frontendRoot));
-// fallback to index.html
 app.get("/", (req, res) => res.sendFile(path.join(frontendRoot, "index.html")));
 
-// optional health check
-app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+// Health check
+app.get("/healthz", (_req, res) => res.send("ok"));
 
-// --- Connect to MongoDB ---
+// MongoDB
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-  console.error("❌ MONGO_URI is not set. Please add it to environment variables.");
+  console.error("❌ MONGO_URI not set");
   process.exit(1);
 }
 
@@ -56,11 +53,11 @@ mongoose.connect(MONGO_URI)
     process.exit(1);
   });
 
-// --- Routes ---
+// Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/contributions", require("./routes/contributions"));
 
-// 404 handler
+// 404
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
 // error handler
@@ -70,12 +67,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// start server
+// start
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
 
-// graceful shutdown
 process.on("SIGINT", () => {
   console.log("Shutting down...");
   server.close(() => {

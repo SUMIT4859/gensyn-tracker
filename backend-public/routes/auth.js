@@ -5,9 +5,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
 
-const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
+const SECRET_KEY = process.env.JWT_SECRET || 'secret';
 
-// REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -19,17 +18,14 @@ router.post('/register', async (req, res) => {
     const user = new User({ username, email, password });
     await user.save();
 
-    // create token immediately (optional)
     const token = jwt.sign({ id: user._id, email: user.email }, SECRET_KEY, { expiresIn: '2d' });
-
-    return res.status(201).json({ message: 'Registered successfully', token, username: user.username });
+    res.status(201).json({ message: 'Registered', token, username: user.username });
   } catch (err) {
-    console.error('Register error:', err);
-    return res.status(500).json({ error: err.message || 'Server error' });
+    console.error("Register error:", err);
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
-// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -42,10 +38,10 @@ router.post('/login', async (req, res) => {
     if (!valid) return res.status(400).json({ error: 'Invalid password' });
 
     const token = jwt.sign({ id: user._id, email: user.email }, SECRET_KEY, { expiresIn: '2d' });
-    return res.json({ token, username: user.username });
+    res.json({ token, username: user.username });
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ error: err.message || 'Server error' });
+    console.error("Login error:", err);
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 

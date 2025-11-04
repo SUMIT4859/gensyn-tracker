@@ -1,3 +1,4 @@
+// backend-public/models/Contribution.js
 const mongoose = require("mongoose");
 
 const ContributionSchema = new mongoose.Schema({
@@ -5,9 +6,9 @@ const ContributionSchema = new mongoose.Schema({
   category: { type: String, required: true },
   link: { type: String },
   description: { type: String },
-  date: { type: String }, // Accept string for easier front-end handling
-  screenshot: { type: String }, // always use 'screenshot'
+  date: { type: String },
+  screenshot: { type: String },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Contribution", ContributionSchema);
