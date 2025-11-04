@@ -6,7 +6,13 @@ function getToken(){ return localStorage.getItem('token') || null; }
 function getAuthHeadersForm(){ const t = getToken(); return t ? { 'Authorization': `Bearer ${t}` } : {}; }
 function getAuthHeadersJSON(){ const t = getToken(); return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type':'application/json' } : { 'Content-Type':'application/json' }; }
 
-function ensureAuth(){ if(!getToken()){ window.location.href = '/login.html'; return false; } return true; }
+function ensureAuth(){ 
+  if(!getToken()){ 
+    window.location.href = '/login.html'; 
+    return false; 
+  } 
+  return true; 
+}
 
 if(location.pathname.endsWith('index.html') || location.pathname === '/' || location.pathname.endsWith('/')){
   if(!ensureAuth()) throw '';
@@ -43,12 +49,12 @@ if(location.pathname.endsWith('index.html') || location.pathname === '/' || loca
       let payload = {};
       if(ct.includes('application/json')) payload = await res.json();
       if(!res.ok) throw new Error(payload.error || `Save failed (${res.status})`);
-      alert('Saved successfully!');
+      alert('✅ Saved successfully!');
       resetForm();
       fetchList();
     } catch (err) {
       console.error(err);
-      alert('Save failed: ' + (err.message || 'Unknown'));
+      alert('❌ Save failed: ' + (err.message || 'Unknown'));
     }
   });
 
@@ -60,102 +66,151 @@ if(location.pathname.endsWith('index.html') || location.pathname === '/' || loca
     const token = getToken();
     if(!token) { alert('Login required'); return; }
     try {
-      const res = await fetch(`${API_BASE}/api/contributions/export/csv`, { method:'GET', headers: { Authorization: `Bearer ${token}` }});
-      if(!res.ok) { const e = await res.json().catch(()=>({error:'Export failed'})); throw new Error(e.error || 'Export failed'); }
+      const res = await fetch(`${API_BASE}/api/contributions/export/csv`, { 
+        method:'GET', 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      if(!res.ok) { 
+        const e = await res.json().catch(()=>({error:'Export failed'})); 
+        throw new Error(e.error || 'Export failed'); 
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'contributions.csv'; document.body.appendChild(a); a.click(); a.remove();
-    } catch (err) { console.error(err); alert('Export failed'); }
+      a.href = url; 
+      a.download = 'contributions.csv'; 
+      document.body.appendChild(a); 
+      a.click(); 
+      a.remove();
+    } catch (err) { 
+      console.error(err); 
+      alert('CSV export failed'); 
+    }
   });
 
   fetchList();
 }
 
+// ---------------- Fetch list ----------------
 async function fetchList(){
   try {
     const res = await fetch(API, { headers: getAuthHeadersJSON() });
-    if(res.status === 401){ localStorage.removeItem('token'); window.location.href='/login.html'; return; }
-    if(!res.ok) { const t = await res.text(); throw new Error(t || `Failed (${res.status})`); }
+    if(res.status === 401){ 
+      localStorage.removeItem('token'); 
+      window.location.href='/login.html'; 
+      return; 
+    }
+    if(!res.ok) { 
+      const t = await res.text(); 
+      throw new Error(t || `Failed (${res.status})`); 
+    }
     const list = await res.json();
     renderTable(list);
   } catch (err) {
     console.error(err);
-    alert('Error loading data: ' + (err.message || 'Network'));
+    alert('⚠️ Error loading data: ' + (err.message || 'Network'));
   }
+}
+
+// ---------------- Render table (no inline JS) ----------------
+function makeActionButton(text, className, onClick) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = text;
+  if (className) btn.className = className;
+  btn.addEventListener('click', onClick);
+  return btn;
 }
 
 function renderTable(list){
   const tbody = document.querySelector('#contribTable tbody');
   if(!tbody) return;
   tbody.innerHTML = '';
+
   list.forEach(item => {
     let screenshotHtml = '—';
     if(item.screenshot) {
       const p = item.screenshot.startsWith('/') ? item.screenshot : `/${item.screenshot}`;
-      screenshotHtml = `<a href="${encodeURI(p)}" target="_blank">View Screenshot</a>`;
+      const safeUrl = encodeURI(p);
+      screenshotHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
     }
+
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(item.title)}</td>
-      <td>${escapeHtml(item.category)}</td>
-      <td>${item.link ? `<a href="${encodeURI(item.link)}" target="_blank">Open</a>` : ''}</td>
-      <td>${screenshotHtml}</td>
-      <td>${item.date? escapeHtml(item.date) : ''}</td>
-      <td>
-        <button onclick='loadEdit("${item._id}")'>Edit</button>
-        <button onclick='del("${item._id}")'>Delete</button>
-      </td>
-    `;
+
+    const tdTitle = document.createElement('td'); tdTitle.textContent = item.title || '';
+    const tdCategory = document.createElement('td'); tdCategory.textContent = item.category || '';
+    const tdLink = document.createElement('td'); 
+    if(item.link) {
+      const link = document.createElement('a');
+      link.href = item.link;
+      link.target = '_blank';
+      link.textContent = 'Open';
+      tdLink.appendChild(link);
+    }
+    const tdImg = document.createElement('td'); tdImg.innerHTML = screenshotHtml;
+    const tdDate = document.createElement('td'); tdDate.textContent = item.date || '';
+    const tdActions = document.createElement('td');
+
+    const editBtn = makeActionButton('Edit', 'action-btn action-edit', () => loadEdit(item._id));
+    const deleteBtn = makeActionButton('Delete', 'action-btn action-delete', () => del(item._id));
+
+    tdActions.appendChild(editBtn);
+    tdActions.appendChild(document.createTextNode(' '));
+    tdActions.appendChild(deleteBtn);
+
+    tr.appendChild(tdTitle);
+    tr.appendChild(tdCategory);
+    tr.appendChild(tdLink);
+    tr.appendChild(tdImg);
+    tr.appendChild(tdDate);
+    tr.appendChild(tdActions);
+
     tbody.appendChild(tr);
   });
 }
 
-function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-function resetForm(){
-  ['contribId','title','category','link','description','date','screenshot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value='';});
-  const btn = document.getElementById('saveBtn'); if(btn) btn.textContent='Save';
+// ---------------- Utility functions ----------------
+function escapeHtml(s){ 
+  if(!s) return ''; 
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); 
 }
 
-// --- loadEdit: load a single contribution into the form for updating
+function resetForm(){
+  ['contribId','title','category','link','description','date','screenshot'].forEach(id=>{ 
+    const el=document.getElementById(id); 
+    if(el) el.value=''; 
+  });
+  const btn = document.getElementById('saveBtn'); 
+  if(btn) btn.textContent='Save';
+}
+
+// ---------------- loadEdit ----------------
 async function loadEdit(id) {
   try {
     if (!id) return alert('Invalid id');
-    // show a small visual while loading (optional)
-    const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Loading...'; }
-
     const res = await fetch(`${API}/${encodeURIComponent(id)}`, { headers: getAuthHeadersJSON() });
     if (res.status === 401) {
-      // token problem
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       window.location.href = '/login.html';
       return;
     }
-    if (!res.ok) {
-      const text = await res.text().catch(()=>null);
-      throw new Error(text || `Failed to load (${res.status})`);
-    }
+    if (!res.ok) throw new Error(`Failed (${res.status})`);
     const data = await res.json();
-
     document.getElementById('contribId').value = data._id || '';
     document.getElementById('title').value = data.title || '';
     document.getElementById('category').value = data.category || '';
     document.getElementById('link').value = data.link || '';
     document.getElementById('description').value = data.description || '';
     document.getElementById('date').value = data.date ? new Date(data.date).toISOString().slice(0,10) : '';
-    if (saveBtn) saveBtn.textContent = 'Update'; // user sees Update
-    if (saveBtn) saveBtn.disabled = false;
+    document.getElementById('saveBtn').textContent = 'Update';
   } catch (err) {
     console.error('loadEdit error:', err);
     alert('Could not load contribution: ' + (err.message || 'Unknown'));
-    const saveBtn = document.getElementById('saveBtn'); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
   }
 }
 
-// --- del: delete a contribution with confirmation
+// ---------------- del ----------------
 async function del(id) {
   if (!id) return alert('Invalid id');
   if (!confirm('Delete this contribution?')) return;
@@ -164,26 +219,20 @@ async function del(id) {
       method: 'DELETE',
       headers: getAuthHeadersJSON()
     });
-
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       window.location.href = '/login.html';
       return;
     }
-
     if (!res.ok) {
-      // try to read JSON body for error message
-      let body;
-      try { body = await res.json(); } catch(e){ body = await res.text().catch(()=>null); }
-      const msg = (body && (body.error || body.message)) || `Delete failed (${res.status})`;
-      throw new Error(msg);
+      const msg = await res.text();
+      throw new Error(msg || `Delete failed (${res.status})`);
     }
-
-    // success -> reload list
+    alert('✅ Deleted successfully!');
     fetchList();
   } catch (err) {
     console.error('delete error:', err);
-    alert('Delete failed: ' + (err.message || 'Unknown'));
+    alert('❌ Delete failed: ' + (err.message || 'Unknown'));
   }
 }
