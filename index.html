@@ -1,17 +1,29 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard • Gensyn Tracker</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <nav class="nav">
-    <div class="nav-left">
-      <div class="brand-inline"><span class="logo">🧭</span><span class="brand-name">Gensyn Tracker</span></div>
-      <div class="nav-badge">Navigator Tool</div>
+    <div class="nav-left" style="display: flex; align-items: center; gap: 15px;">
+      <div class="brand-inline" style="display: flex; align-items: center; gap: 8px;">
+        <span class="logo" style="width: 35px; height: 35px; display: inline-block;">
+          <img src="https://img.cryptorank.io/coins/gensyn1743508051324.png" alt=""
+            style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;">
+        </span>
+        <span class="brand-name" style="font-size: 1.4rem; font-weight: 600; color: #222;">Gensyn Tracker</span>
+      </div>
+      <div class="nav-badge"
+        style="background: #0d6efd; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 500;">
+        Navigator Tool
+      </div>
     </div>
+
 
     <div class="nav-right">
       <div id="welcome" class="welcome">Hi — <strong id="navUser">User</strong></div>
@@ -60,7 +72,13 @@
 
       <table id="contribTable" class="table">
         <thead>
-          <tr><th>Title</th><th>Category</th><th>Link</th><th>Image</th><th>Actions</th></tr>
+          <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Link</th>
+            <th>Image</th>
+            <th>Actions</th>
+          </tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -69,4 +87,5 @@
 
   <script src="/script.js"></script>
 </body>
+
 </html>
